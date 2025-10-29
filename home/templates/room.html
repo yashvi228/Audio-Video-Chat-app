@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <title>Room: {{ room_name }} - WebRTC Chat</title>
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}" />
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        .room-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .room-header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .room-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .room-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .room-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(79, 172, 254, 0.1);
+            border-radius: 20px;
+            color: var(--text-color);
+            font-size: 0.9rem;
+        }
+        
+        .room-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .btn-room-action {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-room-action-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+        
+        .btn-room-action-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+        
+        .btn-room-action:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        
+        .main-room-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        .room-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .video-section-room {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+        }
+        
+        .video-container-room {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .video-wrapper-room {
+            position: relative;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            background: #000;
+        }
+        
+        .video-wrapper-room video {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .video-label-room {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .controls-room {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .btn-control-room {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-control-room::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-control-room:hover::before {
+            left: 100%;
+        }
+        
+        .btn-control-room-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            box-shadow: var(--shadow);
+        }
+        
+        .btn-control-room-success {
+            background: linear-gradient(135deg, var(--success-color), #00d4aa);
+            color: white;
+            box-shadow: var(--shadow);
+        }
+        
+        .btn-control-room-danger {
+            background: linear-gradient(135deg, var(--danger-color), #ff6b6b);
+            color: white;
+            box-shadow: var(--shadow);
+        }
+        
+        .btn-control-room:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .btn-control-room:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .chat-section-room {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-header-room {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .chat-header-room h3 {
+            color: var(--text-color);
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        
+        #chat-log-room {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+        }
+        
+        #chat-log-room::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #chat-log-room::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        
+        #chat-log-room::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 3px;
+        }
+        
+        #chat-log-room::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-color);
+        }
+        
+        #chat-log-room li {
+            list-style: none;
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            animation: slideIn 0.3s ease;
+        }
+        
+        #chat-log-room li span {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 0.8rem;
+            display: inline-block;
+        }
+        
+        .chat-input-container-room {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        #chat-message-input-room {
+            flex: 1;
+            padding: 0.8rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 0.9rem;
+            transition: var(--transition);
+            background: white;
+        }
+        
+        #chat-message-input-room:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        #chat-message-submit-room {
+            padding: 0.8rem 1.5rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+        }
+        
+        #chat-message-submit-room:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        @media (max-width: 768px) {
+            .room-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .video-container-room {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .video-wrapper-room video {
+                height: 200px;
+            }
+            
+            .controls-room {
+                gap: 0.5rem;
+            }
+            
+            .btn-control-room {
+                padding: 0.6rem 1rem;
+                font-size: 0.8rem;
+            }
+            
+            .chat-section-room {
+                height: 400px;
+            }
+            
+            .chat-input-container-room {
+                flex-direction: column;
+            }
+            
+            #chat-message-submit-room {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Room Header -->
+    <header class="room-header">
+        <div class="room-header-content">
+            <div class="room-title">
+                <i class="fas fa-door-open"></i> Room: <span id="roomNameDisplay">{{ room_name }}</span>
+            </div>
+            <div class="room-info">
+                <div class="room-status">
+                    <span class="status-indicator status-online"></span>
+                    <span id="connectionStatus">Connected</span>
+                </div>
+                <div class="room-actions">
+                    <button class="btn-room-action btn-room-action-primary" onclick="shareRoom()">
+                        <i class="fas fa-share"></i> Share Room
+                    </button>
+                    <a href="/rooms/" class="btn-room-action btn-room-action-secondary">
+                        <i class="fas fa-door-open"></i> Join Another Room
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Room Content -->
+    <main class="main-room-container">
+        <div class="room-grid">
+            <!-- Video Section -->
+            <section class="video-section-room">
+                <div class="video-container-room">
+                    <div class="video-wrapper-room">
+                        <video id="localVideoRoom" autoplay playsinline muted></video>
+                        <div class="video-label-room">
+                            <i class="fas fa-user"></i> <span id="localUserName">{{ user_name }}</span>
+                        </div>
+                    </div>
+                    <div class="video-wrapper-room">
+                        <video id="remoteVideoRoom" autoplay playsinline></video>
+                        <div class="video-label-room">
+                            <i class="fas fa-users"></i> Remote User
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls-room">
+                    <button class="btn-control-room btn-control-room-primary" id="startButtonRoom">
+                        <i class="fas fa-play"></i> Start Camera
+                    </button>
+                    <button class="btn-control-room btn-control-room-success" id="callButtonRoom">
+                        <i class="fas fa-phone"></i> Start Call
+                    </button>
+                    <button class="btn-control-room btn-control-room-danger" id="hangupButtonRoom">
+                        <i class="fas fa-phone-slash"></i> End Call
+                    </button>
+                </div>
+            </section>
+
+            <!-- Chat Section -->
+            <section class="chat-section-room">
+                <div class="chat-header-room">
+                    <h3>
+                        <i class="fas fa-comments"></i>
+                        Room Chat
+                    </h3>
+                </div>
+                
+                <ul id="chat-log-room">
+                    <li style="text-align: center; color: #999; font-style: italic;">
+                        <i class="fas fa-comment-slash"></i> Welcome to the room! Start chatting...
+                    </li>
+                </ul>
+                
+                <div class="chat-input-container-room">
+                    <input id="chat-message-input-room" type="text" placeholder="Type your message here..." />
+                    <button id="chat-message-submit-room">
+                        <i class="fas fa-paper-plane"></i> Send
+                    </button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="{% static 'js/reconnecting-websocket.min.js' %}" type="text/javascript"></script>
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+    
+    <!-- Room-based WebRTC Script -->
+    <script>
+        // Room configuration
+        const roomName = '{{ room_name }}';
+        const userName = '{{ user_name }}';
+        const ws = window.location.protocol === "https:" ? 'wss://' : 'ws://';
+        
+        // WebRTC variables
+        let isChannelReady = false;
+        let isInitiator = false;
+        let isStarted = false;
+        let localStream;
+        let pc;
+        let remoteStream;
+        
+        // WebSocket connection
+        let chatSocket;
+        
+        // Initialize the room
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Joining room:', roomName, 'as user:', userName);
+            
+            // Connect to WebSocket
+            chatSocket = new ReconnectingWebSocket(ws + window.location.host + '/ws/chat/' + roomName + '/');
+            
+            // Set up WebSocket event handlers
+            chatSocket.onopen = function() {
+                console.log('Connected to room:', roomName);
+                updateConnectionStatus('connected');
+                isChannelReady = true;
+                
+                // Auto-start camera
+                startCamera();
+            };
+            
+            chatSocket.onclose = function() {
+                console.log('Disconnected from room');
+                updateConnectionStatus('disconnected');
+            };
+            
+            chatSocket.onerror = function(error) {
+                console.error('WebSocket error:', error);
+                updateConnectionStatus('error');
+            };
+            
+            // Set up chat functionality
+            setupChat();
+            
+            // Set up video controls
+            setupVideoControls();
+            
+            // Update UI
+            document.getElementById('roomNameDisplay').textContent = roomName;
+            document.getElementById('localUserName').textContent = userName;
+        });
+        
+        function updateConnectionStatus(status) {
+            const statusElement = document.getElementById('connectionStatus');
+            const indicator = document.querySelector('.status-indicator');
+            
+            switch(status) {
+                case 'connected':
+                    statusElement.textContent = 'Connected';
+                    indicator.className = 'status-indicator status-online';
+                    break;
+                case 'disconnected':
+                    statusElement.textContent = 'Disconnected';
+                    indicator.className = 'status-indicator status-offline';
+                    break;
+                case 'connecting':
+                    statusElement.textContent = 'Connecting...';
+                    indicator.className = 'status-indicator status-connecting';
+                    break;
+                case 'error':
+                    statusElement.textContent = 'Connection Error';
+                    indicator.className = 'status-indicator status-offline';
+                    break;
+            }
+        }
+        
+        function setupChat() {
+            const messageInput = document.getElementById('chat-message-input-room');
+            const messageSubmit = document.getElementById('chat-message-submit-room');
+            const chatLog = document.getElementById('chat-log-room');
+            
+            // Handle incoming messages
+            chatSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                const message = data['message'];
+                const user = data['user'] || 'Anonymous';
+                
+                console.log('Received message:', message, 'from:', user);
+                
+                // Handle WebRTC signaling messages
+                if (message === 'got user media') {
+                    maybeStart();
+                } else if (message.type === 'offer') {
+                    if (!isInitiator && !isStarted) {
+                        maybeStart();
+                    }
+                    pc.setRemoteDescription(new RTCSessionDescription(message));
+                    doAnswer();
+                } else if (message.type === 'answer' && isStarted) {
+                    pc.setRemoteDescription(new RTCSessionDescription(message));
+                } else if (message.type === 'candidate' && isStarted) {
+                    const candidate = new RTCIceCandidate({
+                        sdpMLineIndex: message.label,
+                        candidate: message.candidate
+                    });
+                    pc.addIceCandidate(candidate);
+                } else if (message === 'bye' && isStarted) {
+                    handleRemoteHangup();
+                } else {
+                    // Regular chat message
+                    addMessageToChat(user, message);
+                }
+            };
+            
+            // Send message
+            function sendChatMessage() {
+                const message = messageInput.value.trim();
+                if (message) {
+                    chatSocket.send(JSON.stringify({
+                        'message': message
+                    }));
+                    messageInput.value = '';
+                    messageInput.focus();
+                    
+                    // Auto-scroll to bottom
+                    chatLog.scrollTop = chatLog.scrollHeight;
+                }
+            }
+            
+            // Event listeners
+            messageSubmit.addEventListener('click', sendChatMessage);
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendChatMessage();
+                }
+            });
+            
+            // Focus input
+            messageInput.focus();
+        }
+        
+        function addMessageToChat(user, message) {
+            const chatLog = document.getElementById('chat-log-room');
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span><i class="fas fa-user"></i> ${user}</span> 
+                ${message}
+                <small style="display: block; color: #999; margin-top: 0.3rem; font-size: 0.8rem;">
+                    <i class="fas fa-clock"></i> ${new Date().toLocaleString()}
+                </small>
+            `;
+            chatLog.appendChild(li);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+        
+        function setupVideoControls() {
+            const startBtn = document.getElementById('startButtonRoom');
+            const callBtn = document.getElementById('callButtonRoom');
+            const hangupBtn = document.getElementById('hangupButtonRoom');
+            
+            startBtn.addEventListener('click', startCamera);
+            callBtn.addEventListener('click', startCall);
+            hangupBtn.addEventListener('click', hangupCall);
+            
+            // Initial button states
+            callBtn.disabled = true;
+            hangupBtn.disabled = true;
+        }
+        
+        function startCamera() {
+            navigator.mediaDevices.getUserMedia({
+                audio: true,
+                video: true
+            })
+            .then(gotStream)
+            .catch(function(e) {
+                console.error('getUserMedia error:', e);
+                alert('Error accessing camera: ' + e.name);
+            });
+        }
+        
+        function gotStream(stream) {
+            console.log('Got local stream');
+            const localVideo = document.getElementById('localVideoRoom');
+            localVideo.srcObject = stream;
+            localStream = stream;
+            
+            // Enable call button
+            document.getElementById('callButtonRoom').disabled = false;
+            
+            // Send ready signal
+            sendMessage('got user media');
+            
+            // Auto-start call if initiator
+            if (isInitiator) {
+                maybeStart();
+            }
+        }
+        
+        function startCall() {
+            console.log('Starting call');
+            isInitiator = true;
+            maybeStart();
+            
+            // Update button states
+            document.getElementById('callButtonRoom').disabled = true;
+            document.getElementById('hangupButtonRoom').disabled = false;
+        }
+        
+        function hangupCall() {
+            console.log('Hanging up call');
+            
+            // Stop local stream
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            
+            // Clear video elements
+            const localVideo = document.getElementById('localVideoRoom');
+            const remoteVideo = document.getElementById('remoteVideoRoom');
+            localVideo.srcObject = null;
+            remoteVideo.srcObject = null;
+            
+            // Stop peer connection
+            if (pc) {
+                pc.close();
+                pc = null;
+            }
+            
+            // Send bye message
+            sendMessage('bye');
+            
+            // Reset states
+            isStarted = false;
+            isInitiator = false;
+            
+            // Update button states
+            document.getElementById('callButtonRoom').disabled = false;
+            document.getElementById('hangupButtonRoom').disabled = true;
+        }
+        
+        function sendMessage(message) {
+            console.log('Sending message:', message);
+            chatSocket.send(JSON.stringify({
+                'message': message
+            }));
+        }
+        
+        function maybeStart() {
+            console.log('maybeStart()', isStarted, localStream, isChannelReady);
+            if (!isStarted && localStream && isChannelReady) {
+                console.log('Creating peer connection');
+                createPeerConnection();
+                pc.addStream(localStream);
+                isStarted = true;
+                
+                if (isInitiator) {
+                    doCall();
+                }
+            }
+        }
+        
+        function createPeerConnection() {
+            try {
+                pc = new RTCPeerConnection({
+                    'iceServers': [{
+                        'urls': 'stun:stun.l.google.com:19302'
+                    }]
+                });
+                pc.onicecandidate = handleIceCandidate;
+                pc.onaddstream = handleRemoteStreamAdded;
+                pc.onremovestream = handleRemoteStreamRemoved;
+                console.log('Created RTCPeerConnection');
+            } catch (e) {
+                console.error('Failed to create PeerConnection:', e);
+                alert('Cannot create RTCPeerConnection object.');
+                return;
+            }
+        }
+        
+        function handleIceCandidate(event) {
+            console.log('ICE candidate:', event);
+            if (event.candidate) {
+                sendMessage({
+                    type: 'candidate',
+                    label: event.candidate.sdpMLineIndex,
+                    candidate: event.candidate.candidate
+                });
+            }
+        }
+        
+        function handleRemoteStreamAdded(event) {
+            console.log('Remote stream added');
+            const remoteVideo = document.getElementById('remoteVideoRoom');
+            remoteVideo.srcObject = event.stream;
+            remoteStream = event.stream;
+        }
+        
+        function handleRemoteStreamRemoved(event) {
+            console.log('Remote stream removed');
+        }
+        
+        function doCall() {
+            console.log('Sending offer to peer');
+            pc.createOffer(setLocalAndSendMessage, handleCreateOfferError);
+        }
+        
+        function doAnswer() {
+            console.log('Sending answer to peer');
+            pc.createAnswer().then(setLocalAndSendMessage, onCreateSessionDescriptionError);
+        }
+        
+        function setLocalAndSendMessage(sessionDescription) {
+            pc.setLocalDescription(sessionDescription);
+            console.log('Sending session description:', sessionDescription);
+            sendMessage(sessionDescription);
+        }
+        
+        function handleCreateOfferError(event) {
+            console.error('createOffer error:', event);
+        }
+        
+        function onCreateSessionDescriptionError(error) {
+            console.error('Failed to create session description:', error);
+        }
+        
+        function handleRemoteHangup() {
+            console.log('Session terminated');
+            hangupCall();
+        }
+        
+        function shareRoom() {
+            const roomUrl = window.location.origin + '/room/' + roomName + '/';
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Join my WebRTC room',
+                    text: 'Join me in room: ' + roomName,
+                    url: roomUrl
+                });
+            } else {
+                // Fallback: copy to clipboard
+                navigator.clipboard.writeText(roomUrl).then(function() {
+                    alert('Room link copied to clipboard!');
+                });
+            }
+        }
+        
+        // Cleanup on page unload
+        window.onbeforeunload = function() {
+            sendMessage('bye');
+        };
+    </script>
+</body>
+</html>

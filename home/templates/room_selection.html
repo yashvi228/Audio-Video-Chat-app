@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <title>Join Room - WebRTC Chat</title>
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}" />
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        .room-selection-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+        
+        .room-selection-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: white;
+        }
+        
+        .room-selection-header h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .room-selection-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .room-form-wrapper {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            padding: 3rem;
+            box-shadow: var(--shadow-hover);
+            width: 100%;
+            max-width: 500px;
+        }
+        
+        .form-group {
+            margin-bottom: 2rem;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 0.8rem;
+            display: block;
+        }
+        
+        .form-control {
+            padding: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+            background: white;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn-room {
+            width: 100%;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: var(--shadow);
+        }
+        
+        .btn-room:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .quick-rooms {
+            margin-top: 2rem;
+            text-align: center;
+        }
+        
+        .quick-rooms h4 {
+            color: var(--text-color);
+            margin-bottom: 1rem;
+        }
+        
+        .quick-room-btn {
+            display: inline-block;
+            margin: 0.5rem;
+            padding: 0.8rem 1.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+        }
+        
+        .quick-room-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .back-link {
+            margin-top: 2rem;
+        }
+        
+        .back-link a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.1rem;
+            padding: 0.8rem 2rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+        }
+        
+        .back-link a:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .room-info {
+            background: rgba(79, 172, 254, 0.1);
+            border: 1px solid rgba(79, 172, 254, 0.3);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 2rem;
+            color: var(--text-color);
+        }
+        
+        .room-info i {
+            color: var(--primary-color);
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Room Selection Header -->
+    <header class="room-selection-header">
+        <h1>
+            <i class="fas fa-door-open"></i>
+            Join a Room
+        </h1>
+        <p>Enter a room name to start chatting and video calling with others</p>
+    </header>
+
+    <!-- Room Selection Form -->
+    <section class="room-selection-container">
+        <div class="room-form-wrapper">
+            <div class="room-info">
+                <i class="fas fa-info-circle"></i>
+                <strong>How it works:</strong> Share the same room name with friends to chat and video call together!
+            </div>
+            
+            <form id="roomForm">
+                <div class="form-group">
+                    <label for="roomName">
+                        <i class="fas fa-hashtag"></i> Room Name
+                    </label>
+                    <input type="text" id="roomName" class="form-control" placeholder="Enter room name (e.g., 'meeting-room', 'friends-chat')" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="userName">
+                        <i class="fas fa-user"></i> Your Name
+                    </label>
+                    <input type="text" id="userName" class="form-control" placeholder="Enter your name" required>
+                </div>
+                
+                <button type="submit" class="btn-room">
+                    <i class="fas fa-sign-in-alt"></i> Join Room
+                </button>
+            </form>
+            
+            <div class="quick-rooms">
+                <h4>Quick Join Popular Rooms:</h4>
+                <a href="#" class="quick-room-btn" onclick="joinQuickRoom('general')">
+                    <i class="fas fa-comments"></i> General
+                </a>
+                <a href="#" class="quick-room-btn" onclick="joinQuickRoom('meeting')">
+                    <i class="fas fa-users"></i> Meeting
+                </a>
+                <a href="#" class="quick-room-btn" onclick="joinQuickRoom('friends')">
+                    <i class="fas fa-heart"></i> Friends
+                </a>
+                <a href="#" class="quick-room-btn" onclick="joinQuickRoom('random')">
+                    <i class="fas fa-random"></i> Random
+                </a>
+            </div>
+        </div>
+
+        <div class="back-link">
+            <a href="/">
+                <i class="fas fa-arrow-left"></i> Back to Home
+            </a>
+        </div>
+    </section>
+
+    <!-- JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const roomForm = document.getElementById('roomForm');
+            const roomNameInput = document.getElementById('roomName');
+            const userNameInput = document.getElementById('userName');
+            
+            // Set default username if not set
+            if (!localStorage.getItem('userName')) {
+                userNameInput.value = 'User' + Math.floor(Math.random() * 1000);
+            } else {
+                userNameInput.value = localStorage.getItem('userName');
+            }
+            
+            roomForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const roomName = roomNameInput.value.trim();
+                const userName = userNameInput.value.trim();
+                
+                if (roomName && userName) {
+                    // Save username to localStorage
+                    localStorage.setItem('userName', userName);
+                    
+                    // Redirect to room with parameters
+                    window.location.href = `/room/${roomName}/?user=${encodeURIComponent(userName)}`;
+                }
+            });
+            
+            // Auto-focus room name input
+            roomNameInput.focus();
+            
+            // Enter key handling
+            roomNameInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    userNameInput.focus();
+                }
+            });
+            
+            userNameInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    roomForm.submit();
+                }
+            });
+        });
+        
+        function joinQuickRoom(roomName) {
+            const userName = document.getElementById('userName').value || localStorage.getItem('userName') || 'User' + Math.floor(Math.random() * 1000);
+            window.location.href = `/room/${roomName}/?user=${encodeURIComponent(userName)}`;
+        }
+    </script>
+</body>
+</html>

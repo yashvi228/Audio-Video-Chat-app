@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}" />
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <title>WebRTC Video Chat - Modern Communication</title>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-video"></i> WebRTC Chat
+            </div>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="/rooms/"><i class="fas fa-door-open"></i> Join Room</a></li>
+                    <li><a href="/video"><i class="fas fa-video"></i> Video Test</a></li>
+                    <li><a href="/call"><i class="fas fa-phone"></i> Start Call</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <!-- Video Section -->
+        <section class="video-section">
+            <h1>
+                <i class="fas fa-video"></i>
+                Real-time Video Communication
+            </h1>
+            
+            <div class="video-container">
+                <div class="video-wrapper">
+                    <video id="localVideo" autoplay playsinline muted></video>
+                    <div class="video-label">
+                        <i class="fas fa-user"></i> You
+                    </div>
+                </div>
+                <div class="video-wrapper">
+                    <video id="remoteVideo" autoplay playsinline></video>
+                    <div class="video-label">
+                        <i class="fas fa-users"></i> Remote User
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-primary" id="startButton">
+                    <i class="fas fa-play"></i> Start Camera
+                </button>
+                <button class="btn btn-success" id="callButton">
+                    <i class="fas fa-phone"></i> Start Call
+                </button>
+                <button class="btn btn-danger" id="hangupButton">
+                    <i class="fas fa-phone-slash"></i> End Call
+                </button>
+            </div>
+        </section>
+
+        <!-- Chat Section -->
+        <section class="chat-section">
+            <div class="chat-header">
+                <h3>
+                    <i class="fas fa-comments"></i>
+                    Live Chat
+                    <span class="status-indicator status-online"></span>
+                </h3>
+            </div>
+            
+            <ul id="chat-log">
+                {% for cht in chat %}
+                    <li>
+                        <span><i class="fas fa-user"></i> {{cht.user}}</span> 
+                        {{cht.message}}
+                        <small style="display: block; color: #999; margin-top: 0.3rem; font-size: 0.8rem;">
+                            <i class="fas fa-clock"></i> {{cht.timestamp|date:"M d, Y H:i"}}
+                        </small>
+                    </li>
+                {% empty %}
+                    <li style="text-align: center; color: #999; font-style: italic;">
+                        <i class="fas fa-comment-slash"></i> No messages yet. Start the conversation!
+                    </li>
+                {% endfor %}
+            </ul>
+            
+            <div class="chat-input-container">
+                <input id="chat-message-input" type="text" placeholder="Type your message here..." />
+                <button id="chat-message-submit">
+                    <i class="fas fa-paper-plane"></i> Send
+                </button>
+            </div>
+        </section>
+    </main>
+    
+
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="{% static 'js/main.js' %}"></script>
+    <script src="{% static 'js/chat.js' %}"></script>
+    
+    <!-- Custom JavaScript for enhanced UI -->
+    <script>
+        // Add loading states to buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const startBtn = document.getElementById('startButton');
+            const callBtn = document.getElementById('callButton');
+            const hangupBtn = document.getElementById('hangupButton');
+            
+            // Add click animations
+            [startBtn, callBtn, hangupBtn].forEach(btn => {
+                btn.addEventListener('click', function() {
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 150);
+                });
+            });
+            
+            // Auto-scroll chat to bottom
+            const chatLog = document.getElementById('chat-log');
+            chatLog.scrollTop = chatLog.scrollHeight;
+            
+            // Add typing indicator
+            const messageInput = document.getElementById('chat-message-input');
+            let typingTimer;
+            
+            messageInput.addEventListener('input', function() {
+                clearTimeout(typingTimer);
+                // Could add typing indicator here
+            });
+        });
+        
+        // Enhanced chat message display
+        function addMessageToChat(user, message, timestamp) {
+            const chatLog = document.getElementById('chat-log');
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span><i class="fas fa-user"></i> ${user}</span> 
+                ${message}
+                <small style="display: block; color: #999; margin-top: 0.3rem; font-size: 0.8rem;">
+                    <i class="fas fa-clock"></i> ${new Date().toLocaleString()}
+                </small>
+            `;
+            chatLog.appendChild(li);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+    </script>
+</body>
+</html>
